@@ -1,0 +1,19 @@
+{
+  "name": "litcoin-mcp",
+  "version": "2.1.0",
+  "description": "MCP server for the LITCOIN proof-of-comprehension protocol on Base. Mine, stake, vault, compute, research — all from any AI agent.",
+  "main": "src/index.js",
+  "bin": {
+    "litcoin-mcp": "src/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": ["mcp", "litcoin", "mining", "crypto", "ai-agent", "base", "defi"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.25.0"
+  }
+}
