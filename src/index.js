@@ -77,9 +77,17 @@ const SELECTORS = {
   leaveGuild:             "0x0d3dfa92",
   stakeGuild:             "0x3deb2bb7",
   unstakeGuild:           "0x7b5f7292",
+  earlyUnstake:           "0xfac16858",
+  previewEarlyUnstake:    "0x1ffeb771",
+  getLockRemaining:       "0xaa02a673",
+  getGuildLockStatus:     "0xae3a39b4",
+  getMember:              "0x2ada2596",
+  getGuild:               "0xd3e96693",
+  upgradeGuildTier:       "0x40c45dcc",
 };
 
 const RPC_URLS = [
+  "https://base-mainnet.core.chainstack.com/0e8fb1d0e1b81bc55e077fc1546d4a78",
   "https://base.llamarpc.com",
   "https://base-rpc.publicnode.com",
   "https://mainnet.base.org",
@@ -222,7 +230,7 @@ async function getAuth() {
 
 const server = new McpServer({
   name: "litcoin",
-  version: "1.0.0",
+  version: "2.2.0",
 });
 
 // ── Resources ────────────────────────────────────────────────────────────────
@@ -710,6 +718,244 @@ server.tool(
   {},
   async () => {
     const data = await coordGet("/v1/protocol/stats");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ── Early Unstake ────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_early_unstake",
+  "Preview or execute early unstake with penalty. Call without confirm to preview penalty amount. Call with confirm=true to execute. Returns penalty %, amount burned, and amount returned.",
+  {
+    confirm: z.boolean().optional().describe("Set true to execute. Omit to preview penalty."),
+  },
+  async ({ confirm }) => {
+    const wallet = await getWallet();
+    const r = await coordPost("/v1/bankr/early-unstake", { bankrKey: BANKR_API_KEY, confirm: confirm || false });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Stake Info ───────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_stake_info",
+  "Get detailed staking info: current tier, lock remaining (seconds and human-readable), lock expired status, balance, and all positions.",
+  {},
+  async () => {
+    const wallet = await getWallet();
+    const r = await coordPost("/v1/bankr/balance", { bankrKey: BANKR_API_KEY });
+    const info = {
+      wallet: r.wallet,
+      tier: r.tier,
+      tierName: r.tierName,
+      lockRemaining: r.lockRemaining,
+      lockExpired: r.lockExpired,
+      lockDays: r.lockRemaining > 0 ? Math.ceil(r.lockRemaining / 86400) : 0,
+      balance: r.balance,
+      litcredit: r.litcredit,
+      escrow: r.escrow,
+      vaults: r.vaults,
+      guild: r.guild,
+    };
+    return { content: [{ type: "text", text: JSON.stringify(info, null, 2) }] };
+  }
+);
+
+// ── Vault Details ────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_vault_details",
+  "Get detailed info for each vault: collateral, debt, ratio, max mintable, healthy status. Call after checking balance to see vault IDs.",
+  {},
+  async () => {
+    const r = await coordPost("/v1/bankr/vault/details", { bankrKey: BANKR_API_KEY });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Vault Open ───────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_open_vault_bankr",
+  "Open a new vault by depositing LITCOIN as collateral. Uses Bankr key directly — no MetaMask needed. Handles approve + open in one call.",
+  {
+    amount: z.number().describe("LITCOIN amount to deposit as collateral"),
+  },
+  async ({ amount }) => {
+    const r = await coordPost("/v1/bankr/vault/open", { bankrKey: BANKR_API_KEY, amount });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Vault Add Collateral (Bankr) ─────────────────────────────────────────────
+
+server.tool(
+  "litcoin_add_collateral_bankr",
+  "Add LITCOIN collateral to an existing vault via Bankr. Handles approve + addCollateral in one call.",
+  {
+    vaultId: z.number().describe("Vault ID"),
+    amount: z.number().describe("LITCOIN amount to add"),
+  },
+  async ({ vaultId, amount }) => {
+    const r = await coordPost("/v1/bankr/vault/add-collateral", { bankrKey: BANKR_API_KEY, vaultId, amount });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Vault Mint (Bankr) ──────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_mint_bankr",
+  "Mint LITCREDIT against vault collateral via Bankr. Checks maxMintable, accounts for 0.5% fee. Returns error with maxMintable if amount exceeds limit.",
+  {
+    vaultId: z.number().describe("Vault ID"),
+    amount: z.number().describe("LITCREDIT amount to mint"),
+  },
+  async ({ vaultId, amount }) => {
+    const r = await coordPost("/v1/bankr/vault/mint", { bankrKey: BANKR_API_KEY, vaultId, amount });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Stake Guild ──────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_stake_guild",
+  "Guild leader stakes the guild pool at a tier (1-4). Requires leader role. Pool must have enough deposited LITCOIN for the tier. Locks the entire guild.",
+  {
+    guildId: z.number().describe("Guild ID"),
+    tier: z.number().min(1).max(4).describe("Staking tier 1-4"),
+    amount: z.number().describe("Amount to stake (total pool)"),
+  },
+  async ({ guildId, tier, amount }) => {
+    const wallet = await getWallet();
+    const wei = BigInt(Math.floor(amount)) * 10n ** 18n;
+    await approveTx(CONTRACTS.LITCOIN, CONTRACTS.STAKING, wei.toString());
+    const cd = SELECTORS.stakeGuild + hex64(guildId) + hex64(tier) + hex64(wei.toString());
+    const result = await submitTx(CONTRACTS.GUILD, cd);
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
+// ── Unstake Guild ────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_unstake_guild",
+  "Guild leader unstakes the guild. Requires lock to be expired. Frees all member tokens. Members can leave after this.",
+  {
+    guildId: z.number().describe("Guild ID"),
+  },
+  async ({ guildId }) => {
+    const r = await coordPost("/v1/bankr/guild/unstake", { bankrKey: BANKR_API_KEY, guildId });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Deploy Agent ─────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_deploy_agent",
+  "Deploy an autonomous mining agent. Strategies: conservative (~100 solves/hr), balanced (~400/hr), aggressive (~1600/hr), researcher (~300/hr + research). Set maxBudget to cap LITCOIN deployed across staking+vaults. Set targetTier to override staking target.",
+  {
+    strategy: z.enum(["conservative", "balanced", "aggressive", "researcher"]).describe("Agent strategy"),
+    maxBudget: z.number().optional().describe("Max LITCOIN to deploy (null=unlimited)"),
+    targetTier: z.number().min(1).max(4).optional().describe("Target staking tier (1-4)"),
+    aiKey: z.string().optional().describe("AI API key for research (or use Bankr LLM)"),
+    useBankrLLM: z.boolean().optional().describe("Use Bankr key as LLM key"),
+  },
+  async ({ strategy, maxBudget, targetTier, aiKey, useBankrLLM }) => {
+    const body = {
+      strategy,
+      bankrKey: BANKR_API_KEY,
+      aiKey: useBankrLLM ? BANKR_API_KEY : (aiKey || undefined),
+      aiUrl: useBankrLLM ? "https://llm.bankr.bot/v1" : undefined,
+      config: {
+        maxBudget: maxBudget || null,
+        targetTier: targetTier || null,
+      },
+    };
+    const r = await coordPost("/v1/agent/deploy", body);
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Agent Config ─────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_agent_config",
+  "Update a running agent's behavior. 9 boolean toggles (mine, research, autoClaim, autoStake, openVaults, mintLitcredit, autoDefend, depositEscrow, compound) plus targetTier (1-4 or null) and maxBudget (number or null). Changes take effect next cycle.",
+  {
+    agentId: z.string().describe("Agent ID"),
+    mine: z.boolean().optional(),
+    research: z.boolean().optional(),
+    autoClaim: z.boolean().optional(),
+    autoStake: z.boolean().optional(),
+    openVaults: z.boolean().optional(),
+    mintLitcredit: z.boolean().optional(),
+    autoDefend: z.boolean().optional(),
+    depositEscrow: z.boolean().optional(),
+    compound: z.boolean().optional(),
+    targetTier: z.number().min(1).max(4).nullable().optional().describe("Target staking tier"),
+    maxBudget: z.number().nullable().optional().describe("Max LITCOIN to deploy"),
+  },
+  async ({ agentId, ...config }) => {
+    const body = { agentId, bankrKey: BANKR_API_KEY, config };
+    const r = await coordPost("/v1/agent/config", body);
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Agent List ───────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_agent_list",
+  "List all running agents with solve counts, mining rates, recent activity, config, and on-chain snapshots. Shows solvesPerHour, lastSolveAt, comprehensionSolves, researchSolves.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/agents");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ── Agent Stop ───────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_agent_stop",
+  "Stop a running agent. Requires ownership proof (same Bankr key used to deploy).",
+  {
+    agentId: z.string().describe("Agent ID to stop"),
+  },
+  async ({ agentId }) => {
+    const r = await coordPost("/v1/agent/stop", { agentId, bankrKey: BANKR_API_KEY });
+    return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+  }
+);
+
+// ── Research Leaderboard ─────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_research_leaderboard",
+  "Get the research leaderboard: top miners by reward, breakthroughs, submissions, quality score.",
+  {
+    taskId: z.string().optional().describe("Filter by task ID"),
+  },
+  async ({ taskId }) => {
+    const q = taskId ? `?taskId=${taskId}` : "";
+    const data = await coordGet(`/v1/research/leaderboard${q}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ── Health ───────────────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_health",
+  "Check coordinator health: uptime, active miners, treasury, emission, research sandbox status, error buffer. Use this as first diagnostic step.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/health");
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
 );
