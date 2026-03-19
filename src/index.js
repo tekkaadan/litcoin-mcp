@@ -512,12 +512,12 @@ server.tool(
   "Send a prompt to the LITCOIN compute marketplace for AI inference. Uses LITCREDIT from escrow. Returns the AI response.",
   {
     prompt: z.string().describe("The prompt to send"),
-    model: z.string().optional().describe("Model name (default: llama-3.3-70b)"),
+    model: z.string().optional().describe("Model name (default: google/gemini-2.5-flash for OpenRouter, gemini-2.5-flash for Bankr LLM)"),
   },
   async ({ prompt, model }) => {
     const result = await coordPost("/v1/compute/request", {
       prompt,
-      model: model || "llama-3.3-70b",
+      model: model || "google/gemini-2.5-flash",
       maxTokens: 1024,
     });
     return {
@@ -944,6 +944,78 @@ server.tool(
   async ({ taskId }) => {
     const q = taskId ? `?taskId=${taskId}` : "";
     const data = await coordGet(`/v1/research/leaderboard${q}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ── AutoResearch (Phase 1-6) ────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_research_evolution",
+  "Get the evolution context for a research task: current best solution (code, model, reasoning trace), top 3 solutions, task stats. This is the Solution Feed that agents use to improve on existing work.",
+  {
+    task_id: z.string().describe("Research task ID (e.g., cf-675-E, euler-001)"),
+  },
+  async ({ task_id }) => {
+    const data = await coordGet(`/v1/research/task/${task_id}/evolution`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_research_lineage",
+  "Get the breakthrough lineage for a research task: chronological chain of every new record, showing which model and miner achieved each breakthrough and when. Used for Evolution Visualization.",
+  {
+    task_id: z.string().describe("Research task ID"),
+  },
+  async ({ task_id }) => {
+    const data = await coordGet(`/v1/research/task/${task_id}/lineage`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_research_miner_history",
+  "Get a miner's personal research history: personal bests per task, total reward earned, submission counts. Used for Deep Dive task selection.",
+  {
+    wallet: z.string().optional().describe("Miner wallet (defaults to your wallet)"),
+  },
+  async ({ wallet }) => {
+    const w = wallet || await getWallet();
+    const data = await coordGet(`/v1/research/miner/${w}/history`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_research_dataset_stats",
+  "Get public dataset statistics: total submissions, unique miners, models, breakthroughs, improvements, traced submissions. The research archive is exportable as a CC-BY-4.0 dataset.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/research/dataset/stats");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_research_focus_categories",
+  "Get available task categories for research focus specialization (Island Model). Returns category names with active task counts.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/research/focus-categories");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_research_guild_stats",
+  "Get aggregate research stats for a set of wallets (guild members). Shows total submissions, breakthroughs, reward earned, and per-member breakdown.",
+  {
+    wallets: z.array(z.string()).describe("Array of wallet addresses (max 50)"),
+    guild_id: z.number().optional().describe("Guild ID for labeling"),
+  },
+  async ({ wallets, guild_id }) => {
+    const data = await coordPost("/v1/research/guild-stats", { wallets, guildId: guild_id });
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
 );

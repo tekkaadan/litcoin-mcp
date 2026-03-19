@@ -1,7 +1,7 @@
 {
   "name": "litcoin-mcp",
-  "version": "2.2.0",
-  "description": "MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. 43 tools: mine, stake, vault, compute, research, guilds, autonomous agents — all from any AI agent.",
+  "version": "2.3.0",
+  "description": "MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. 49 tools: mine, stake, vault, compute, research, guilds, autonomous agents, AutoResearch — all from any AI agent.",
   "main": "src/index.js",
   "bin": {
     "litcoin-mcp": "src/index.js"

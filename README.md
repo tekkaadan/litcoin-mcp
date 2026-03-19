@@ -1,6 +1,6 @@
 # litcoin-mcp
 
-MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. **43 tools** covering mining, research, staking, vaults, LITCREDIT, guilds, autonomous agents, and compute.
+MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. **49 tools** covering mining, research, AutoResearch, staking, vaults, LITCREDIT, guilds, autonomous agents, and compute.
 
 ## Install
 
@@ -24,7 +24,7 @@ BANKR_API_KEY=bk_YOUR_KEY npx litcoin-mcp
 
 Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write access.
 
-## Tools (43)
+## Tools (49)
 
 ### Mining & Rewards
 | Tool | Description |
@@ -42,13 +42,23 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 ### Research
 | Tool | Description |
 |------|-------------|
-| `litcoin_research_tasks` | List active research tasks (19 types) |
+| `litcoin_research_tasks` | List active research tasks (20 tasks, 3 categories) |
 | `litcoin_research_get_task` | Get task details |
 | `litcoin_research_submit` | Submit solution code |
 | `litcoin_research_results` | Recent results |
 | `litcoin_research_stats` | Global research stats |
 | `litcoin_research_history` | Your submission history |
 | `litcoin_research_leaderboard` | Top researchers by reward |
+
+### AutoResearch (v2.3.0)
+| Tool | Description |
+|------|-------------|
+| `litcoin_research_evolution` | Solution Feed: current best code, top 3 solutions, reasoning traces for a task |
+| `litcoin_research_lineage` | Breakthrough chain: chronological record of every new global best |
+| `litcoin_research_miner_history` | Per-miner personal bests, task history, reward breakdown |
+| `litcoin_research_dataset_stats` | Public dataset stats (845K+ submissions, CC-BY-4.0) |
+| `litcoin_research_focus_categories` | Available task categories for Island Model specialization |
+| `litcoin_research_guild_stats` | Aggregate research stats for guild member wallets |
 
 ### Staking
 | Tool | Description |
@@ -92,8 +102,8 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 ### Autonomous Agents
 | Tool | Description |
 |------|-------------|
-| `litcoin_deploy_agent` | Deploy agent (4 strategies, budget limit) |
-| `litcoin_agent_config` | Update 9 toggles + targetTier + maxBudget |
+| `litcoin_deploy_agent` | Deploy agent (4 strategies, research mode + focus, budget limit) |
+| `litcoin_agent_config` | Update 9 toggles + targetTier + maxBudget + researchMode + researchFocus |
 | `litcoin_agent_list` | List agents with solve rates and activity |
 | `litcoin_agent_stop` | Stop agent |
 
@@ -106,18 +116,25 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 | aggressive | ~1,600/hr | 15 min | High |
 | researcher | ~300/hr + research | 30 min | Medium |
 
-Set `maxBudget` to cap how much the agent deploys. Set `targetTier` to override staking target.
+Set `maxBudget` to cap how much the agent deploys. Set `targetTier` to override staking target. Set `researchMode` to explore/deep_dive/specialize. Set `researchFocus` to a task category (algorithm, mathematics, bioinformatics, etc.).
 
 ## Key Info
 
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- Emission: 1.5%/day (~34.4M LITCOIN)
+- Emission: 1.5%/day (~34.5M LITCOIN)
 - 1 LITCREDIT = 1,000 output tokens of frontier AI
 - Docs: https://litcoiin.xyz/docs
 - Site: https://litcoiin.xyz
+- About: https://litcoiin.xyz/about
 
 ## Changelog
+
+### 2.3.0 (March 2026)
+- **6 new AutoResearch tools**: evolution (Solution Feed), lineage (breakthrough chain), miner_history (personal bests), dataset_stats (845K+ export), focus_categories (Island Model), guild_stats (guild research performance)
+- **BREAKING**: Default model changed from `llama-3.3-70b` to `google/gemini-2.5-flash` (llama removed from Bankr LLM)
+- Agent deploy/config now supports `researchMode` (explore/deep_dive/specialize) and `researchFocus` (task category)
+- 49 tools total (was 43)
 
 ### 2.2.0 (March 2026)
 - **14 new tools**: early_unstake, stake_info, vault_details, open_vault_bankr, add_collateral_bankr, mint_bankr, stake_guild, unstake_guild, deploy_agent, agent_config, agent_list, agent_stop, research_leaderboard, health
