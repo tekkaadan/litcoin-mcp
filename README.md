@@ -1,6 +1,6 @@
 # litcoin-mcp
 
-MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. **49 tools** covering mining, research, AutoResearch, staking, vaults, LITCREDIT, guilds, autonomous agents, and compute.
+MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. **43 tools** covering mining, research, staking, vaults, LITCREDIT, guilds, autonomous agents, compute, and API keys.
 
 ## Install
 
@@ -24,7 +24,7 @@ BANKR_API_KEY=bk_YOUR_KEY npx litcoin-mcp
 
 Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write access.
 
-## Tools (49)
+## Tools (43)
 
 ### Mining & Rewards
 | Tool | Description |
@@ -42,109 +42,65 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 ### Research
 | Tool | Description |
 |------|-------------|
-| `litcoin_research_tasks` | List active research tasks (20 tasks, 3 categories) |
-| `litcoin_research_get_task` | Get task details |
+| `litcoin_research_tasks` | List active research tasks |
+| `litcoin_research_get_task` | Get task details + baseline |
 | `litcoin_research_submit` | Submit solution code |
-| `litcoin_research_results` | Recent results |
-| `litcoin_research_stats` | Global research stats |
-| `litcoin_research_history` | Your submission history |
-| `litcoin_research_leaderboard` | Top researchers by reward |
+| `litcoin_research_results` | Recent results with improvements |
+| `litcoin_research_stats` | Global research stats + 24h metrics |
+| `litcoin_research_history` | Your submission history per task |
 
-### AutoResearch (v2.3.0)
+### DeFi
 | Tool | Description |
 |------|-------------|
-| `litcoin_research_evolution` | Solution Feed: current best code, top 3 solutions, reasoning traces for a task |
-| `litcoin_research_lineage` | Breakthrough chain: chronological record of every new global best |
-| `litcoin_research_miner_history` | Per-miner personal bests, task history, reward breakdown |
-| `litcoin_research_dataset_stats` | Public dataset stats (845K+ submissions, CC-BY-4.0) |
-| `litcoin_research_focus_categories` | Available task categories for Island Model specialization |
-| `litcoin_research_guild_stats` | Aggregate research stats for guild member wallets |
-
-### Staking
-| Tool | Description |
-|------|-------------|
-| `litcoin_stake` | Stake into tier 1-4 (auto-approve) |
+| `litcoin_stake` | Stake at a tier (Spark/Circuit/Core/Architect) |
 | `litcoin_unstake` | Unstake after lock expires |
-| `litcoin_early_unstake` | Preview/execute early unstake with penalty |
-| `litcoin_stake_info` | Tier, lock remaining, positions, guild |
-
-### Vaults
-| Tool | Description |
-|------|-------------|
-| `litcoin_open_vault` | Open vault (MetaMask) |
-| `litcoin_open_vault_bankr` | Open vault (Bankr key) |
-| `litcoin_mint` | Mint LITCREDIT (MetaMask) |
-| `litcoin_mint_bankr` | Mint LITCREDIT (Bankr key) |
-| `litcoin_repay` | Repay vault debt |
-| `litcoin_add_collateral` | Add collateral (MetaMask) |
-| `litcoin_add_collateral_bankr` | Add collateral (Bankr key) |
-| `litcoin_close_vault` | Close vault |
-| `litcoin_vaults` | List your vaults |
-| `litcoin_vault_details` | Per-vault health, debt, collateral |
+| `litcoin_open_vault` | Open a vault with LITCOIN collateral |
+| `litcoin_mint_litcredit` | Mint LITCREDIT from vault |
+| `litcoin_repay_debt` | Repay vault debt |
+| `litcoin_add_collateral` | Add collateral to vault |
+| `litcoin_close_vault` | Close vault (repays debt, returns collateral) |
+| `litcoin_vault_details` | Get vault status and ratios |
+| `litcoin_deposit_escrow` | Deposit LITCREDIT to compute escrow |
+| `litcoin_join_guild` | Join a mining guild |
+| `litcoin_leave_guild` | Leave current guild |
 
 ### Compute
 | Tool | Description |
 |------|-------------|
-| `litcoin_deposit_escrow` | Deposit LITCREDIT for compute |
-| `litcoin_compute` | AI inference via relay network |
+| `litcoin_compute_chat` | Send a prompt to relay miners (OpenAI-compatible) |
+| `litcoin_compute_health` | Network status and provider count |
+| `litcoin_compute_providers` | List online relay providers |
+| `litcoin_compute_models` | Available models from online relays |
 
-### Guilds
+### Agents
 | Tool | Description |
 |------|-------------|
-| `litcoin_create_guild` | Create a mining guild |
-| `litcoin_join_guild` | Join guild with deposit |
-| `litcoin_leave_guild` | Leave guild |
-| `litcoin_stake_guild` | Leader stakes guild at tier |
-| `litcoin_unstake_guild` | Leader unstakes guild |
-| `litcoin_guild_yield` | Guild yield stats |
-| `litcoin_guild_member_yield` | Your personal guild yield |
+| `litcoin_deploy_agent` | Deploy an autonomous Sentinel agent |
+| `litcoin_stop_agent` | Stop an agent |
+| `litcoin_agent_config` | Update agent config (relay, research, DeFi toggles) |
+| `litcoin_agent_status` | Get agent details |
+| `litcoin_list_agents` | List all agents |
 
-### Autonomous Agents
-| Tool | Description |
-|------|-------------|
-| `litcoin_deploy_agent` | Deploy agent (4 strategies, research mode + focus, budget limit) |
-| `litcoin_agent_config` | Update 9 toggles + targetTier + maxBudget + researchMode + researchFocus |
-| `litcoin_agent_list` | List agents with solve rates and activity |
-| `litcoin_agent_stop` | Stop agent |
+## What's New in v2.2.0
 
-## Agent Strategies
+- Research stats now include 24h metrics
+- Compute tools use OpenAI-compatible `/v1/chat/completions`
+- Agent config supports `relayEnabled` and `relayBudget`
+- AI provider auto-detected from key prefix
 
-| Strategy | Mining Rate | Cycle | Risk |
-|----------|-----------|-------|------|
-| conservative | ~100/hr | 60 min | Low |
-| balanced | ~400/hr | 30 min | Medium |
-| aggressive | ~1,600/hr | 15 min | High |
-| researcher | ~300/hr + research | 30 min | Medium |
+## Links
 
-Set `maxBudget` to cap how much the agent deploys. Set `targetTier` to override staking target. Set `researchMode` to explore/deep_dive/specialize. Set `researchFocus` to a task category (algorithm, mathematics, bioinformatics, etc.).
-
-## Key Info
-
-- Chain: Base mainnet (8453)
-- Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- Emission: 1.5%/day (~34.5M LITCOIN)
-- 1 LITCREDIT = 1,000 output tokens of frontier AI
-- Docs: https://litcoiin.xyz/docs
 - Site: https://litcoiin.xyz
-- About: https://litcoiin.xyz/about
+- SDK: `pip install litcoin` (v4.7.0)
+- Docs: https://litcoiin.xyz/docs
+- Research: https://litcoiin.xyz/research
+- Dataset: https://huggingface.co/datasets/tekkaadan/litcoin-research
+- Chain: Base mainnet (8453)
 
-## Changelog
+## Version
 
-### 2.3.0 (March 2026)
-- **6 new AutoResearch tools**: evolution (Solution Feed), lineage (breakthrough chain), miner_history (personal bests), dataset_stats (845K+ export), focus_categories (Island Model), guild_stats (guild research performance)
-- **BREAKING**: Default model changed from `llama-3.3-70b` to `google/gemini-2.5-flash` (llama removed from Bankr LLM)
-- Agent deploy/config now supports `researchMode` (explore/deep_dive/specialize) and `researchFocus` (task category)
-- 49 tools total (was 43)
+2.2.0
 
-### 2.2.0 (March 2026)
-- **14 new tools**: early_unstake, stake_info, vault_details, open_vault_bankr, add_collateral_bankr, mint_bankr, stake_guild, unstake_guild, deploy_agent, agent_config, agent_list, agent_stop, research_leaderboard, health
-- Chainstack as primary RPC
-- Added missing selectors (earlyUnstake, getLockRemaining, guild lock status)
-- 43 tools total (was 29)
+## License
 
-### 2.1.0
-- Research tools (6), guild yield, miner status, protocol stats
-- 29 tools
-
-### 2.0.0
-- Initial release with mining, staking, vaults, compute, guilds
+MIT
