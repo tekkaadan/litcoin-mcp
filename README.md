@@ -1,6 +1,6 @@
 # litcoin-mcp
 
-MCP server for the LITCOIN proof-of-comprehension and proof-of-research protocol on Base. **43 tools** covering mining, research, staking, vaults, LITCREDIT, guilds, autonomous agents, compute, and API keys.
+MCP server for the LITCOIN proof-of-research protocol on Base. **43 tools** covering mining, research, staking, vaults, LITCREDIT, guilds, autonomous agents, compute, bounties, and API keys.
 
 ## Install
 
@@ -85,13 +85,16 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 
 - Research stats now include 24h metrics
 - Compute tools use OpenAI-compatible `/v1/chat/completions`
-- Agent config supports `relayEnabled` and `relayBudget`
+- Agent config supports `relayEnabled`, `relayBudget`, and `useEscrowCompute`
 - AI provider auto-detected from key prefix
+- Bounty system: post bounties with LITCOIN or LITCREDIT (on-chain escrow via BountyEscrow contract)
+- Position endpoint: `GET /v1/position?wallet=` returns full on-chain snapshot
+- 1,099 problems across 5 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC)
 
 ## Links
 
 - Site: https://litcoiin.xyz
-- SDK: `pip install litcoin` (v4.7.0)
+- SDK: `pip install litcoin` (v4.8.1)
 - Docs: https://litcoiin.xyz/docs
 - Research: https://litcoiin.xyz/research
 - Dataset: https://huggingface.co/datasets/tekkaadan/litcoin-research
