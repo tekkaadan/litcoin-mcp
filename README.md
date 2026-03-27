@@ -55,9 +55,10 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 | `litcoin_stake` | Stake at a tier (Spark/Circuit/Core/Architect) |
 | `litcoin_unstake` | Unstake after lock expires |
 | `litcoin_open_vault` | Open a vault with LITCOIN collateral |
+| `litcoin_open_vault_v2` | Open vault with LITCOIN or USDC (multi-collateral) |
 | `litcoin_mint_litcredit` | Mint LITCREDIT from vault |
 | `litcoin_repay_debt` | Repay vault debt |
-| `litcoin_add_collateral` | Add collateral to vault |
+| `litcoin_add_collateral` | Add collateral to vault (auto-detects LITCOIN/USDC) |
 | `litcoin_close_vault` | Close vault (repays debt, returns collateral) |
 | `litcoin_vault_details` | Get vault status and ratios |
 | `litcoin_deposit_escrow` | Deposit LITCREDIT to compute escrow |

@@ -33,6 +33,7 @@ const BANKR_BASE = "https://api.bankr.bot";
 
 const CONTRACTS = {
   LITCOIN:        "0x316ffb9c875f900AdCF04889E415cC86b564EBa3",
+  USDC:           "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   STAKING:        "0xC9584Ce1591E8EB38EdF15C28f2FDcca97A3d3B7",
   ORACLE:         "0x4f937937A3B7Ca046d0f2B5071782aFFC675241b",
   LITCREDIT:      "0x33e3d328F62037EB0d173705674CE713c348f0a6",
@@ -61,6 +62,8 @@ const SELECTORS = {
   unstake:                "0x2def6620",
   upgradeTier:            "0xa2949dd7",
   openVault:              "0x04a2ce7e",
+  openVaultV2:            "0x6313f5fa",
+  getVaultToken:          "0x08ee8d6a",
   addCollateral:          "0xa8f35adf",
   mintLitCredit:          "0x91b4ffb4",
   repayDebt:              "0x015cb0a5",
@@ -256,12 +259,13 @@ server.tool(
   {},
   async () => {
     const wallet = await getWallet();
-    const [litRaw, lcRaw, tierRaw, boostRaw, escrowRaw] = await Promise.all([
+    const [litRaw, lcRaw, tierRaw, boostRaw, escrowRaw, usdcRaw] = await Promise.all([
       rpcCall(CONTRACTS.LITCOIN, SELECTORS.balanceOf + padAddr(wallet)),
       rpcCall(CONTRACTS.LITCREDIT, SELECTORS.balanceOf + padAddr(wallet)),
       rpcCall(CONTRACTS.STAKING, SELECTORS.getTier + padAddr(wallet)),
       rpcCall(CONTRACTS.STAKING, SELECTORS.getMiningBoostBps + padAddr(wallet)),
       rpcCall(CONTRACTS.COMPUTE_ESCROW, SELECTORS.available + padAddr(wallet)),
+      rpcCall(CONTRACTS.USDC, SELECTORS.balanceOf + padAddr(wallet)),
     ]);
     const tier = Number(decodeUint(tierRaw));
     return {
@@ -269,6 +273,7 @@ server.tool(
         wallet,
         litcoin: toTokens(decodeUint(litRaw)),
         litcredit: toTokens(decodeUint(lcRaw)),
+        usdc: Math.floor(Number(decodeUint(usdcRaw)) / 1e6 * 100) / 100,
         stakingTier: tier,
         tierName: TIER_NAMES[tier] || "None",
         miningBoost: `${(Number(decodeUint(boostRaw)) / 10000).toFixed(2)}x`,
@@ -390,16 +395,35 @@ server.tool(
   }
 );
 
-// Open vault
+// Open vault (V1 — LITCOIN only)
 server.tool(
   "litcoin_open_vault",
-  "Open a vault with LITCOIN collateral to mint LITCREDIT. Specify collateral in whole tokens.",
+  "Open a vault with LITCOIN collateral to mint LITCREDIT. For USDC vaults, use litcoin_open_vault_v2.",
   { collateral: z.number().positive().describe("LITCOIN collateral amount in whole tokens") },
   async ({ collateral }) => {
     const wei = BigInt(Math.floor(collateral)) * 10n ** 18n;
     await approveTx(CONTRACTS.LITCOIN, CONTRACTS.VAULT_MANAGER, wei);
     const result = await submitTx(CONTRACTS.VAULT_MANAGER, SELECTORS.openVault + hex64(wei));
     return { content: [{ type: "text", text: `Vault opened with ${collateral} LITCOIN: ${JSON.stringify(result)}` }] };
+  }
+);
+
+// Open vault V2 (multi-collateral — LITCOIN or USDC)
+server.tool(
+  "litcoin_open_vault_v2",
+  "Open a vault with LITCOIN or USDC collateral. USDC vaults have 105% fixed ratio (no staking needed). LITCOIN vaults have tier-based ratios (150-250%).",
+  {
+    collateral_type: z.enum(["litcoin", "usdc"]).describe("Collateral token: 'litcoin' or 'usdc'"),
+    amount: z.number().positive().describe("Amount in whole units (e.g. 1000 for 1000 USDC, 10000000 for 10M LITCOIN)"),
+  },
+  async ({ collateral_type, amount }) => {
+    const isUSDC = collateral_type === "usdc";
+    const tokenAddr = isUSDC ? CONTRACTS.USDC : CONTRACTS.LITCOIN;
+    const wei = isUSDC ? BigInt(Math.floor(amount * 1e6)) : BigInt(Math.floor(amount)) * 10n ** 18n;
+    await approveTx(tokenAddr, CONTRACTS.VAULT_MANAGER, wei);
+    const paddedToken = tokenAddr.toLowerCase().replace("0x", "").padStart(64, "0");
+    const result = await submitTx(CONTRACTS.VAULT_MANAGER, SELECTORS.openVaultV2 + paddedToken + hex64(wei));
+    return { content: [{ type: "text", text: `${isUSDC ? "USDC" : "LITCOIN"} vault opened with ${amount} ${collateral_type.toUpperCase()}: ${JSON.stringify(result)}` }] };
   }
 );
 
@@ -434,19 +458,26 @@ server.tool(
   }
 );
 
-// Add collateral
+// Add collateral (auto-detects LITCOIN or USDC vault)
 server.tool(
   "litcoin_add_collateral",
-  "Add more LITCOIN collateral to an existing vault.",
+  "Add collateral to an existing vault. Auto-detects whether it is a LITCOIN or USDC vault.",
   {
     vault_id: z.number().describe("Vault ID"),
-    amount: z.number().positive().describe("LITCOIN to add"),
+    amount: z.number().positive().describe("Amount to add (whole units)"),
   },
   async ({ vault_id, amount }) => {
-    const wei = BigInt(Math.floor(amount)) * 10n ** 18n;
-    await approveTx(CONTRACTS.LITCOIN, CONTRACTS.VAULT_MANAGER, wei);
+    // Detect vault type
+    let tokenAddr = CONTRACTS.LITCOIN;
+    try {
+      const r = await rpcCall(CONTRACTS.VAULT_MANAGER, SELECTORS.getVaultToken + hex64(vault_id));
+      if (r && r.length >= 66) tokenAddr = "0x" + r.slice(26, 66);
+    } catch {}
+    const isUSDC = tokenAddr.toLowerCase() === CONTRACTS.USDC.toLowerCase();
+    const wei = isUSDC ? BigInt(Math.floor(amount * 1e6)) : BigInt(Math.floor(amount)) * 10n ** 18n;
+    await approveTx(tokenAddr, CONTRACTS.VAULT_MANAGER, wei);
     const result = await submitTx(CONTRACTS.VAULT_MANAGER, SELECTORS.addCollateral + hex64(vault_id) + hex64(wei));
-    return { content: [{ type: "text", text: `Added ${amount} LITCOIN to vault #${vault_id}: ${JSON.stringify(result)}` }] };
+    return { content: [{ type: "text", text: `Added ${amount} ${isUSDC ? "USDC" : "LITCOIN"} to vault #${vault_id}: ${JSON.stringify(result)}` }] };
   }
 );
 
