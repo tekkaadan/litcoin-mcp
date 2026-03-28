@@ -90,12 +90,12 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 - AI provider auto-detected from key prefix
 - Bounty system: post bounties with LITCOIN or LITCREDIT (on-chain escrow via BountyEscrow contract)
 - Position endpoint: `GET /v1/position?wallet=` returns full on-chain snapshot
-- 1,099 problems across 5 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC)
+- 1,599 problems across 6 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC, SWE-bench)
 
 ## Links
 
 - Site: https://litcoiin.xyz
-- SDK: `pip install litcoin` (v4.8.1)
+- SDK: `pip install litcoin` (v4.9.1)
 - Docs: https://litcoiin.xyz/docs
 - Research: https://litcoiin.xyz/research
 - Dataset: https://huggingface.co/datasets/tekkaadan/litcoin-research
