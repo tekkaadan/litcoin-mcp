@@ -95,7 +95,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 ## Links
 
 - Site: https://litcoiin.xyz
-- SDK: `pip install litcoin` (v4.9.1)
+- SDK: `pip install litcoin` (v4.9.2)
 - Docs: https://litcoiin.xyz/docs
 - Research: https://litcoiin.xyz/research
 - Dataset: https://huggingface.co/datasets/tekkaadan/litcoin-research
