@@ -82,7 +82,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 | `litcoin_agent_status` | Get agent details |
 | `litcoin_list_agents` | List all agents |
 
-## What's New in v2.2.0
+## What's New in v2.4.0
 
 - Research stats now include 24h metrics
 - Compute tools use OpenAI-compatible `/v1/chat/completions`
@@ -90,7 +90,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 - AI provider auto-detected from key prefix
 - Bounty system: post bounties with LITCOIN or LITCREDIT (on-chain escrow via BountyEscrow contract)
 - Position endpoint: `GET /v1/position?wallet=` returns full on-chain snapshot
-- 1,599 problems across 6 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC, SWE-bench)
+- 1,599 problems across 7 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC, SWE-bench, LiveCodeBench)
 
 ## Links
 
@@ -103,7 +103,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 
 ## Version
 
-2.2.0
+2.4.0
 
 ## License
 
