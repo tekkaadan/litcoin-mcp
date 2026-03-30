@@ -90,7 +90,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 - AI provider auto-detected from key prefix
 - Bounty system: post bounties with LITCOIN or LITCREDIT (on-chain escrow via BountyEscrow contract)
 - Position endpoint: `GET /v1/position?wallet=` returns full on-chain snapshot
-- 1,599 problems across 7 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC, SWE-bench, LiveCodeBench)
+- 2,653 problems across 7 databases (Codeforces, Euler, Rosalind, HuggingFace, ARC, SWE-bench, LiveCodeBench)
 
 ## Links
 
