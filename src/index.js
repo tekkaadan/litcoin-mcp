@@ -1063,6 +1063,100 @@ server.tool(
   }
 );
 
+// ─── Bounty Tools ──────────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_bounty_list",
+  "List research bounties. Bounties are on-chain escrow challenges: someone deposits LITCOIN, miners compete to solve the task, winner takes the pot. Returns active, settled, and expired bounties.",
+  {
+    status: z.enum(["active", "settled", "expired", "all"]).optional().describe("Filter by status (default: active)"),
+  },
+  async ({ status }) => {
+    const params = status ? `?status=${status}` : "";
+    const data = await coordGet(`/v1/research/bounties${params}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_bounty_details",
+  "Get details for a specific bounty: title, description, reward amount, deadline, current best submission, number of attempts, on-chain escrow status.",
+  {
+    bounty_id: z.string().describe("Bounty ID (e.g. bounty-123)"),
+  },
+  async ({ bounty_id }) => {
+    const data = await coordGet(`/v1/research/bounty/${encodeURIComponent(bounty_id)}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_bounty_create",
+  "Create a new research bounty with on-chain LITCOIN escrow. You define the problem, set a reward, and deposit LITCOIN. Miners compete to solve it. Best solution wins the pot. Requires Bankr key for escrow deposit.",
+  {
+    title: z.string().describe("Bounty title"),
+    description: z.string().describe("Problem description — be specific about inputs, outputs, and success criteria"),
+    reward: z.number().describe("LITCOIN reward amount to escrow"),
+    deadline_hours: z.number().optional().describe("Hours until deadline (default: 72)"),
+    task_type: z.string().optional().describe("Task type: algorithm, mathematics, bioinformatics, pattern_recognition, software_engineering, ml_training, code_optimization"),
+    bankr_key: z.string().optional().describe("Bankr API key for escrow deposit (uses env BANKR_API_KEY if not provided)"),
+  },
+  async ({ title, description, reward, deadline_hours, task_type, bankr_key }) => {
+    const data = await coordPost("/v1/research/bounties/create", {
+      title,
+      description,
+      reward,
+      deadlineHours: deadline_hours || 72,
+      taskType: task_type || "algorithm",
+      bankrKey: bankr_key || BANKR_API_KEY,
+    });
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ─── Model Arena Tools ─────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_model_arena",
+  "Get the Model Arena: leaderboard of all AI models ranked by breakthroughs, performance by domain, and 24h trending models. Shows which models are best at which research categories.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/research/arena");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_model_compare",
+  "Head-to-head comparison of two AI models on the research protocol. Returns win/loss/tie record on shared tasks, per-domain breakdown, avg quality, breakthroughs, and improvement rates.",
+  {
+    model_a: z.string().describe("First model name (e.g. openrouter/hunter-alpha)"),
+    model_b: z.string().describe("Second model name (e.g. xiaomi/mimo-v2-pro)"),
+  },
+  async ({ model_a, model_b }) => {
+    const data = await coordGet(`/v1/research/arena/compare?a=${encodeURIComponent(model_a)}&b=${encodeURIComponent(model_b)}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// ─── Miners Leaderboard ────────────────────────────────────────────────────
+
+server.tool(
+  "litcoin_miners_leaderboard",
+  "Get top miners (researchers) ranked by total reward earned. Shows submissions, breakthroughs, models used, domains covered, and last active time. Paginated.",
+  {
+    limit: z.number().optional().describe("Results per page (default: 30, max: 100)"),
+    offset: z.number().optional().describe("Pagination offset (default: 0)"),
+  },
+  async ({ limit, offset }) => {
+    const params = new URLSearchParams();
+    if (limit) params.set("limit", String(Math.min(limit, 100)));
+    if (offset) params.set("offset", String(offset));
+    const data = await coordGet(`/v1/research/miners?${params.toString()}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
 function solveChallenge(challenge) {
   const { doc, questions, constraints, entities } = challenge;
   if (!doc || !questions) return "";
