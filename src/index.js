@@ -28,7 +28,7 @@ import { z } from "zod";
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const BANKR_API_KEY = process.env.BANKR_API_KEY || "";
-const COORDINATOR = process.env.COORDINATOR_URL || "https://api.litcoiin.xyz";
+const COORDINATOR = process.env.COORDINATOR_URL || "https://api.litcoin.app";
 const BANKR_BASE = "https://api.bankr.bot";
 
 const CONTRACTS = {
@@ -245,7 +245,7 @@ server.resource(
     contents: [{
       uri: "litcoin://docs",
       mimeType: "text/plain",
-      text: "Full LITCOIN protocol documentation available at https://litcoiin.xyz/docs.md — fetch this URL for complete SDK reference, contract addresses, and API endpoints.",
+      text: "Full LITCOIN protocol documentation available at https://litcoin.app/docs.md — fetch this URL for complete SDK reference, contract addresses, and API endpoints.",
     }],
   })
 );
