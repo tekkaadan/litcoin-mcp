@@ -151,7 +151,7 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 
 ## Version
 
-2.6.0
+2.6.2
 
 ## License
 

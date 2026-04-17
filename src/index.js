@@ -118,14 +118,14 @@ async function bankrPost(path, body) {
 }
 
 async function coordGet(path, token) {
-  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-1.0.0" };
+  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.2" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const r = await fetch(`${COORDINATOR}${path}`, { headers });
   return r.json();
 }
 
 async function coordPost(path, body, token) {
-  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-1.0.0" };
+  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.2" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const r = await fetch(`${COORDINATOR}${path}`, {
     method: "POST", headers, body: JSON.stringify(body),
@@ -233,7 +233,7 @@ async function getAuth() {
 
 const server = new McpServer({
   name: "litcoin",
-  version: "2.2.0",
+  version: "2.6.2",
 });
 
 // ── Resources ────────────────────────────────────────────────────────────────
@@ -1092,23 +1092,28 @@ server.tool(
 
 server.tool(
   "litcoin_bounty_create",
-  "Create a new research bounty with on-chain LITCOIN escrow. You define the problem, set a reward, and deposit LITCOIN. Miners compete to solve it. Best solution wins the pot. Requires Bankr key for escrow deposit.",
+  "Create a new research bounty with on-chain LITCOIN escrow. You define the problem, set a reward, and deposit LITCOIN. Miners compete to solve it. Best solution wins the pot. Bankr key is read from the BANKR_API_KEY environment variable on the MCP server side for security; never pass it as a tool argument.",
   {
     title: z.string().describe("Bounty title"),
-    description: z.string().describe("Problem description — be specific about inputs, outputs, and success criteria"),
+    description: z.string().describe("Problem description. Be specific about inputs, outputs, and success criteria."),
     reward: z.number().describe("LITCOIN reward amount to escrow"),
     deadline_hours: z.number().optional().describe("Hours until deadline (default: 72)"),
     task_type: z.string().optional().describe("Task type: algorithm, mathematics, bioinformatics, pattern_recognition, software_engineering, ml_training, code_optimization"),
-    bankr_key: z.string().optional().describe("Bankr API key for escrow deposit (uses env BANKR_API_KEY if not provided)"),
   },
-  async ({ title, description, reward, deadline_hours, task_type, bankr_key }) => {
+  async ({ title, description, reward, deadline_hours, task_type }) => {
+    // SECURITY: never accept bankr_key as a tool argument. Tool arguments are
+    // visible in Claude Desktop UI, transcripts, and logs. Always read from
+    // the server-side env var set by the user running the MCP process.
+    if (!BANKR_API_KEY) {
+      return { content: [{ type: "text", text: JSON.stringify({ error: "BANKR_API_KEY env var not set on MCP server. Get a key at bankr.bot/api and restart the MCP server with it." }, null, 2) }] };
+    }
     const data = await coordPost("/v1/research/bounties/create", {
       title,
       description,
       reward,
       deadlineHours: deadline_hours || 72,
       taskType: task_type || "algorithm",
-      bankrKey: bankr_key || BANKR_API_KEY,
+      bankrKey: BANKR_API_KEY,
     });
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
@@ -1173,7 +1178,7 @@ server.tool(
   "litcoin_tcg_search",
   "Search the TCG catalog across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. Filter by game, rarity, type, text query, or whether a LITCOIN miner has already produced an AI intelligence profile for the card. Supports sort by name, number, rarity, price-desc, price-asc, recent.",
   {
-    game: z.string().optional().describe("pokemon, mtg, yugioh, onepiece, greedisland, or omit for all"),
+    game: z.enum(["pokemon", "mtg", "yugioh", "onepiece", "greedisland"]).optional().describe("pokemon, mtg, yugioh, onepiece, greedisland, or omit for all"),
     query: z.string().optional().describe("Free-text name or keyword search"),
     set: z.string().optional().describe("Set code filter (e.g. sv1, base1, lob)"),
     rarity: z.string().optional().describe("Rarity filter"),
@@ -1201,7 +1206,7 @@ server.tool(
   "litcoin_tcg_card",
   "Get full details for a single TCG card including latest price. Identify the card by game, set_code, and card_number (universal_id is game:set:number).",
   {
-    game: z.string().describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
+    game: z.enum(["pokemon", "mtg", "yugioh", "onepiece", "greedisland"]).describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
     set_code: z.string().describe("Set code (e.g. sv1, base1, lob)"),
     card_number: z.string().describe("Card number within the set"),
   },
@@ -1215,7 +1220,7 @@ server.tool(
   "litcoin_tcg_price_history",
   "Get daily price history for a single card across the requested window (max 365 days).",
   {
-    game: z.string().describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
+    game: z.enum(["pokemon", "mtg", "yugioh", "onepiece", "greedisland"]).describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
     set_code: z.string().describe("Set code"),
     card_number: z.string().describe("Card number within the set"),
     days: z.number().optional().describe("Window in days (default: 90, max: 365)"),
