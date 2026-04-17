@@ -1,7 +1,7 @@
 {
   "name": "litcoin-mcp",
-  "version": "2.5.0",
-  "description": "MCP server for the LITCOIN proof-of-research protocol on Base. 56 tools: mine, stake, vault, compute, research, bounties, model arena, miners leaderboard, guilds, autonomous agents.",
+  "version": "2.6.0",
+  "description": "MCP server for the LITCOIN proof-of-research protocol on Base. 62 tools: mine, stake, vault, compute, research, bounties, model arena, miners leaderboard, guilds, autonomous agents, and TCG intelligence (Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island).",
   "main": "src/index.js",
   "bin": {
     "litcoin-mcp": "src/index.js"
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/index.js"
   },
-  "keywords": ["mcp", "litcoin", "mining", "crypto", "ai-agent", "base", "defi", "bounties", "research"],
+  "keywords": ["mcp", "litcoin", "mining", "crypto", "ai-agent", "base", "defi", "bounties", "research", "tcg", "pokemon", "mtg", "yugioh"],
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

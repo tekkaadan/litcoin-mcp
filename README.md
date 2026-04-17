@@ -1,6 +1,6 @@
 # litcoin-mcp
 
-MCP server for the LITCOIN proof-of-research protocol on Base. **56 tools** covering mining, research, bounties, model arena, staking, vaults, LITCREDIT, guilds, autonomous agents, compute, and miners leaderboard.
+MCP server for the LITCOIN proof-of-research protocol on Base. **62 tools** covering mining, research, bounties, model arena, staking, vaults, LITCREDIT, guilds, autonomous agents, compute, miners leaderboard, and TCG intelligence (Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island).
 
 ## Install
 
@@ -114,27 +114,44 @@ Get a Bankr API key at [bankr.bot/api](https://bankr.bot/api). Enable write acce
 | `litcoin_agent_config` | Update agent config (relay, research, DeFi toggles) |
 | `litcoin_agent_list` | List all agents |
 
-## What's New in v2.5.0
+### TCG Intelligence
+| Tool | Description |
+|------|-------------|
+| `litcoin_tcg_stats` | Catalog stats: cards indexed, per-game breakdown, price points, sentiment queue |
+| `litcoin_tcg_search` | Search cards across Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island (sort by name, rarity, price) |
+| `litcoin_tcg_card` | Single card details + latest price (game:set:number) |
+| `litcoin_tcg_price_history` | Daily price history for one card (up to 365 days) |
+| `litcoin_tcg_trending` | Cards trending by price momentum and sentiment volume |
+| `litcoin_tcg_prices_live` | Live prices for highest-value cards, refreshed every 30 minutes |
 
+## What's New in v2.6.0
+
+- **TCG Intelligence** (6 new tools): search and pull live data across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. 800K+ cards indexed with live pricing and community sentiment
+- 20 research databases now (added adversarial robustness, agentic traces, tcg-card-profile, tcg-sentiment)
+
+## Previous releases
+
+### v2.5.0
 - **Bounty tools**: list, view, and create bounties with on-chain LITCOIN escrow
 - **Model Arena**: full leaderboard, domain breakdown, 24h trending, head-to-head comparison
 - **Miners leaderboard**: paginated top miners by reward, breakthroughs, models used
-- 2,653 problems across 7 databases (algorithms, math, bioinformatics, pattern recognition, software engineering, ML, code optimization)
+- 2,800+ problems across 20 databases
 - 1.84M+ verified submissions in the open dataset
 - LoRA proof: +3.0 points on HumanEval from LITCOIN training data
 
 ## Links
 
 - Site: https://litcoin.app
-- SDK: `pip install litcoin` (v4.9.2)
+- SDK: `pip install litcoin` (v4.9.5)
 - Docs: https://litcoin.app/docs
 - Research: https://litcoin.app/research
+- Cards: https://litcoin.app/cards
 - Dataset: https://huggingface.co/datasets/tekkaadan/litcoin-research
 - Chain: Base mainnet (8453)
 
 ## Version
 
-2.5.0
+2.6.0
 
 ## License
 

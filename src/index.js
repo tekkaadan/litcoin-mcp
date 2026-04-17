@@ -1157,6 +1157,103 @@ server.tool(
   }
 );
 
+// ─── TCG Intelligence (Cards) ──────────────────────────────────────────────
+
+server.tool(
+  "litcoin_tcg_stats",
+  "Get TCG catalog statistics: total cards indexed, per-game breakdown (Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island), price points, sentiment queue depth.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/tcg/stats");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_tcg_search",
+  "Search the TCG catalog across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. Filter by game, rarity, type, or text query. Supports sort by name, number, rarity, price-desc, price-asc, recent.",
+  {
+    game: z.string().optional().describe("pokemon, mtg, yugioh, onepiece, greedisland, or omit for all"),
+    query: z.string().optional().describe("Free-text name or keyword search"),
+    set: z.string().optional().describe("Set code filter (e.g. sv1, base1, lob)"),
+    rarity: z.string().optional().describe("Rarity filter"),
+    sort: z.string().optional().describe("name, number, rarity, price-desc, price-asc, recent (default: name)"),
+    limit: z.number().optional().describe("Results per page (default: 50, max: 100)"),
+    offset: z.number().optional().describe("Pagination offset"),
+  },
+  async ({ game, query, set, rarity, sort, limit, offset }) => {
+    const params = new URLSearchParams();
+    if (game) params.set("game", game);
+    if (query) params.set("q", query);
+    if (set) params.set("set", set);
+    if (rarity) params.set("rarity", rarity);
+    if (sort) params.set("sort", sort);
+    if (limit) params.set("limit", String(Math.min(limit, 100)));
+    if (offset) params.set("offset", String(offset));
+    const data = await coordGet(`/v1/tcg/cards?${params.toString()}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_tcg_card",
+  "Get full details for a single TCG card including latest price. Identify the card by game, set_code, and card_number (universal_id is game:set:number).",
+  {
+    game: z.string().describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
+    set_code: z.string().describe("Set code (e.g. sv1, base1, lob)"),
+    card_number: z.string().describe("Card number within the set"),
+  },
+  async ({ game, set_code, card_number }) => {
+    const data = await coordGet(`/v1/tcg/cards/${game}/${set_code}/${card_number}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_tcg_price_history",
+  "Get daily price history for a single card across the requested window (max 365 days).",
+  {
+    game: z.string().describe("pokemon, mtg, yugioh, onepiece, or greedisland"),
+    set_code: z.string().describe("Set code"),
+    card_number: z.string().describe("Card number within the set"),
+    days: z.number().optional().describe("Window in days (default: 90, max: 365)"),
+  },
+  async ({ game, set_code, card_number, days }) => {
+    const params = new URLSearchParams();
+    if (days) params.set("days", String(Math.min(days, 365)));
+    const data = await coordGet(`/v1/tcg/cards/${game}/${set_code}/${card_number}/prices?${params.toString()}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_tcg_trending",
+  "Get currently trending cards across TCG games, ranked by recent price momentum and sentiment volume.",
+  {
+    game: z.string().optional().describe("Filter by game, or omit for all games"),
+    days: z.number().optional().describe("Window in days (default: 7, max: 90)"),
+    limit: z.number().optional().describe("Results count (default: 20, max: 100)"),
+  },
+  async ({ game, days, limit }) => {
+    const params = new URLSearchParams();
+    if (game) params.set("game", game);
+    if (days) params.set("days", String(Math.min(days, 90)));
+    if (limit) params.set("limit", String(Math.min(limit, 100)));
+    const data = await coordGet(`/v1/tcg/trending?${params.toString()}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+server.tool(
+  "litcoin_tcg_prices_live",
+  "Get the latest live prices for the highest-value cards across all games (top-N per game). Updated every 30 minutes by the coordinator.",
+  {},
+  async () => {
+    const data = await coordGet("/v1/tcg/prices/live");
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
 function solveChallenge(challenge) {
   const { doc, questions, constraints, entities } = challenge;
   if (!doc || !questions) return "";
