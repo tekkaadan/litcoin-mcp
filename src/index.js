@@ -1171,22 +1171,24 @@ server.tool(
 
 server.tool(
   "litcoin_tcg_search",
-  "Search the TCG catalog across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. Filter by game, rarity, type, or text query. Supports sort by name, number, rarity, price-desc, price-asc, recent.",
+  "Search the TCG catalog across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. Filter by game, rarity, type, text query, or whether a LITCOIN miner has already produced an AI intelligence profile for the card. Supports sort by name, number, rarity, price-desc, price-asc, recent.",
   {
     game: z.string().optional().describe("pokemon, mtg, yugioh, onepiece, greedisland, or omit for all"),
     query: z.string().optional().describe("Free-text name or keyword search"),
     set: z.string().optional().describe("Set code filter (e.g. sv1, base1, lob)"),
     rarity: z.string().optional().describe("Rarity filter"),
+    has_profile: z.boolean().optional().describe("true = only cards with a verified AI profile, false = only cards not yet profiled, omit = no filter"),
     sort: z.string().optional().describe("name, number, rarity, price-desc, price-asc, recent (default: name)"),
     limit: z.number().optional().describe("Results per page (default: 50, max: 100)"),
     offset: z.number().optional().describe("Pagination offset"),
   },
-  async ({ game, query, set, rarity, sort, limit, offset }) => {
+  async ({ game, query, set, rarity, has_profile, sort, limit, offset }) => {
     const params = new URLSearchParams();
     if (game) params.set("game", game);
     if (query) params.set("q", query);
     if (set) params.set("set", set);
     if (rarity) params.set("rarity", rarity);
+    if (typeof has_profile === "boolean") params.set("has_profile", has_profile ? "true" : "false");
     if (sort) params.set("sort", sort);
     if (limit) params.set("limit", String(Math.min(limit, 100)));
     if (offset) params.set("offset", String(offset));
