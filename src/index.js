@@ -89,12 +89,15 @@ const SELECTORS = {
   upgradeGuildTier:       "0x40c45dcc",
 };
 
+// Public RPCs only. The package ships on npm, so no paid slugs here.
+// Users who want better throughput can set BASE_RPC_URL in their env and it
+// will be preferred.
 const RPC_URLS = [
-  "https://base-mainnet.core.chainstack.com/0e8fb1d0e1b81bc55e077fc1546d4a78",
+  process.env.BASE_RPC_URL,
   "https://base.llamarpc.com",
   "https://base-rpc.publicnode.com",
   "https://mainnet.base.org",
-];
+].filter(Boolean);
 
 const TIER_AMOUNTS = { 1: 1_000_000, 2: 5_000_000, 3: 50_000_000, 4: 500_000_000 };
 const TIER_NAMES = { 1: "Spark", 2: "Circuit", 3: "Core", 4: "Architect" };
@@ -118,14 +121,14 @@ async function bankrPost(path, body) {
 }
 
 async function coordGet(path, token) {
-  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.2" };
+  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.3" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const r = await fetch(`${COORDINATOR}${path}`, { headers });
   return r.json();
 }
 
 async function coordPost(path, body, token) {
-  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.2" };
+  const headers = { "Content-Type": "application/json", "X-Litcoin-SDK": "mcp-2.6.3" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const r = await fetch(`${COORDINATOR}${path}`, {
     method: "POST", headers, body: JSON.stringify(body),
@@ -233,7 +236,7 @@ async function getAuth() {
 
 const server = new McpServer({
   name: "litcoin",
-  version: "2.6.2",
+  version: "2.6.3",
 });
 
 // ── Resources ────────────────────────────────────────────────────────────────
